@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>common/string.js - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CalibrationClient.html">CalibrationClient</a><ul class='methods'><li data-type='method'><a href="CalibrationClient.html#~get">get</a></li><li data-type='method'><a href="CalibrationClient.html#~getId">getId</a></li><li data-type='method'><a href="CalibrationClient.html#~load">load</a></li><li data-type='method'><a href="CalibrationClient.html#~save">save</a></li><li data-type='method'><a href="CalibrationClient.html#~set">set</a></li></ul></li><li><a href="CalibrationServer.html">CalibrationServer</a><ul class='methods'><li data-type='method'><a href="CalibrationServer.html#~load">load</a></li><li data-type='method'><a href="CalibrationServer.html#~save">save</a></li></ul></li><li><a href="string.Levenshtein.html">Levenshtein</a><ul class='methods'><li data-type='method'><a href="string.Levenshtein.html#~closestKey">closestKey</a></li><li data-type='method'><a href="string.Levenshtein.html#~distance">distance</a></li></ul></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">common/string.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>'use strict';
+
+var string = {};
+
+// code from Marco de Wit http://stackoverflow.com/a/18514751
+string.Levenshtein = ((function(){"use strict";var PRS$0 = (function(o,t){o["__proto__"]={"a":t};return o["a"]===t})({},{});var DP$0 = Object.defineProperty;var GOPD$0 = Object.getOwnPropertyDescriptor;var MIXIN$0 = function(t,s){for(var p in s){if(s.hasOwnProperty(p)){DP$0(t,p,GOPD$0(s,p));}}return t};var proto$0={};
+  /**
+   * This is the constructor, used to cache the strings.
+   *
+   * See {@linkcode string.Levenshtein~distance} method to actually
+   * compute the distance.
+   *
+   * @constructs string.Levenshtein
+   */
+  function constructor$0() {
+    this.cache = [];
+  }DP$0(constructor$0,"prototype",{"configurable":false,"enumerable":false,"writable":false});
+
+  /**
+   * Levenshtein distance of 2 strings.
+   *
+   * 0 is the minimum distance, meaning that s1 === s2
+   *
+   * @function string.Levenshtein~distance
+   * @param {String} s1
+   * @param {String} s2
+   * @returns {Number} distance
+   */
+  proto$0.distance = function(s1, s2) {
+    if (s1 === s2) {
+      return 0;
+    } else {
+      var s1Length = s1.length;
+      var s2Length = s2.length;
+      if (s1Length &amp;&amp; s2Length) {
+        var i1 = 0;
+        var i2 = 0;
+        var a, b, c, c2;
+        var row = this.cache;
+        while (i1 &lt; s1Length) {
+          row[i1] = ++i1;
+        }
+        while (i2 &lt; s2Length) {
+          c2 = s2.charCodeAt(i2);
+          a = i2;
+          ++i2;
+          b = i2;
+          for (i1 = 0; i1 &lt; s1Length; ++i1) {
+            c = a + (s1.charCodeAt(i1) === c2 ? 0 : 1);
+            a = row[i1];
+            b = b &lt; a ? (b &lt; c ? b + 1 : c) : (a &lt; c ? a + 1 : c);
+            row[i1] = b;
+          }
+        }
+        return b;
+      } else {
+        return s1Length + s2Length;
+      }
+    }
+  };
+
+  /**
+   * @typedef string.Levenshtein~closestKeyReturn
+   * @type {Object}
+   * @property {String} key closest to query
+   * @property {Number} distance corresponding distance of result.key
+   */
+
+  /**
+   * Find the key in an object, which is the closest to the query,
+   * according to their Levenshtein distance.
+   *
+   * @see {@linkcode string.Levenshtein~distance}
+   *
+   * @function string.Levenshtein~closestKey
+   * @param {Object} object
+   * @param {String} query
+   * @returns {string.Levenshtein~closestKeyReturn} result closest to query
+   */
+  proto$0.closestKey = function(object, query) {
+    if(object.hasOwnProperty(query) ) {
+      return {
+        key: query,
+        distance: 0
+      };
+    } else {
+      var key;
+      var distance = Infinity;
+
+      for(var k in object) {
+        if(object.hasOwnProperty(k) ) {
+          var d = this.distance(query, k);
+          if(d &lt; distance) {
+            distance = d;
+            key = k;
+          }
+          if(distance === 0) {
+            break;
+          }
+        }
+      }
+      return {
+        key: key,
+        distance: distance
+      };
+    }
+  };
+
+MIXIN$0(constructor$0.prototype,proto$0);proto$0=void 0;return constructor$0;})());
+
+module.exports = exports = string;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0</a> on Wed May 20 2015 18:50:39 GMT+0200 (CEST) using the Minami theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>
