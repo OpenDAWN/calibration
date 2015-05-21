@@ -48,7 +48,6 @@ class CalibrationClient {
 
       // calibrated attributes
       this.audio = {};
-      this.audio.outputs = ['internal', 'external'];
       this.network = {};
     }
   }
@@ -56,7 +55,7 @@ class CalibrationClient {
   /**
    * Get an identifier for making a request on the server.
    *
-   * @see {@linkcode CalibrationServer~request}
+   * @see {@linkcode CalibrationServer~load}
    *
    * @function CalibrationClient~getId
    * @returns {String} Identifier
@@ -87,14 +86,9 @@ class CalibrationClient {
    * @param {calibration} restoreParams
    */
   set(params) {
-    if(typeof params !== 'undefined') {
-      if(typeof params.audio !== 'undefined') {
-        for(let o of this.audio.outputs) {
-          if(params.audio.hasOwnProperty(o) ) {
-            this.audio[o] = params.audio[o];
-          }
-        }
-      }
+    if(typeof params !== 'undefined'
+       && typeof params.audio !== 'undefined') {
+      this.audio = params.audio;
     }
   }
 
@@ -107,24 +101,16 @@ class CalibrationClient {
    * @function CalibrationClient~save
    */
   save() {
-    const params = {};
-    for(let o of this.audio.outputs) {
-      if(typeof this.audio[o] !== 'undefined') {
-        if(typeof params.audio === 'undefined') {
-          params.audio = {};
-        }
-        params.audio[o] = this.audio[o];
-      }
-    }
-    params.network = this.network;
-
-    const keys = ['audio', 'network'];
+    const params = {
+      audio: this.audio,
+      network: this.network
+    };
     if(this.localStorage.enabled) {
       try {
-        for(let k of keys) {
-          if(typeof params[k] !== 'undefined') {
-            window.localStorage[this.localStorage.prefix + k]
-              = JSON.stringify(params[k]);
+        for(let c in params) {
+          if(params.hasOwnProperty(c) ) {
+            window.localStorage[this.localStorage.prefix + c]
+              = JSON.stringify(params[c]);
           }
         }
       } catch (error) {
@@ -149,7 +135,7 @@ class CalibrationClient {
     let calibration = {};
     if(this.localStorage.enabled) {
       const keys = ['audio', 'network'];
-      for(let k in keys) {
+      for(let k of keys) {
         if(typeof window.localStorage[this.localStorage.prefix + k]
            !== 'undefined') {
           calibration[k] = JSON.parse(

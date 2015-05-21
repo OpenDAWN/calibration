@@ -11,7 +11,7 @@ var platform = require('platform');
 // calibration~calibration type definition
 var calibrationType = require('../common/calibration');
 
-var CalibrationClient = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"a":t};return o["a"]===t})({},{});var DP$0 = Object.defineProperty;var GOPD$0 = Object.getOwnPropertyDescriptor;var MIXIN$0 = function(t,s){for(var p in s){if(s.hasOwnProperty(p)){DP$0(t,p,GOPD$0(s,p));}}return t};var proto$0={};var S_ITER$0 = typeof Symbol!=='undefined'&&Symbol&&Symbol.iterator||'@@iterator';var S_MARK$0 = typeof Symbol!=='undefined'&&Symbol&&Symbol["__setObjectSetter__"];function GET_ITER$0(v){if(v){if(Array.isArray(v))return 0;var f;if(S_MARK$0)S_MARK$0(v);if(typeof v==='object'&&typeof (f=v[S_ITER$0])==='function'){if(S_MARK$0)S_MARK$0(void 0);return f.call(v);}if(S_MARK$0)S_MARK$0(void 0);if((v+'')==='[object Generator]')return v;}throw new Error(v+' is not iterable')};
+var CalibrationClient = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"a":t};return o["a"]===t})({},{});var DP$0 = Object.defineProperty;var GOPD$0 = Object.getOwnPropertyDescriptor;var MIXIN$0 = function(t,s){for(var p in s){if(s.hasOwnProperty(p)){DP$0(t,p,GOPD$0(s,p));}}return t};var proto$0={};
   /**
    * This is the constructor. See {@linkcode CalibrationClient~save}
    * and {@linkcode CalibrationClient~load}
@@ -48,7 +48,6 @@ var CalibrationClient = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"
 
       // calibrated attributes
       this.audio = {};
-      this.audio.outputs = ['internal', 'external'];
       this.network = {};
     }
   }DP$0(CalibrationClient,"prototype",{"configurable":false,"enumerable":false,"writable":false});
@@ -56,7 +55,7 @@ var CalibrationClient = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"
   /**
    * Get an identifier for making a request on the server.
    *
-   * @see {@linkcode CalibrationServer~request}
+   * @see {@linkcode CalibrationServer~load}
    *
    * @function CalibrationClient~getId
    * @returns {String} Identifier
@@ -86,15 +85,10 @@ var CalibrationClient = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"
    * @function CalibrationClient~set
    * @param {calibration} restoreParams
    */
-  proto$0.set = function(params) {var $D$0;var $D$1;var $D$2;var $D$3;
-    if(typeof params !== 'undefined') {
-      if(typeof params.audio !== 'undefined') {
-        $D$3 = (this.audio.outputs);$D$0 = GET_ITER$0($D$3);$D$2 = $D$0 === 0;$D$1 = ($D$2 ? $D$3.length : void 0);for(var o ;$D$2 ? ($D$0 < $D$1) : !($D$1 = $D$0["next"]())["done"];){o = ($D$2 ? $D$3[$D$0++] : $D$1["value"]);
-          if(params.audio.hasOwnProperty(o) ) {
-            this.audio[o] = params.audio[o];
-          }
-        };$D$0 = $D$1 = $D$2 = $D$3 = void 0;
-      }
+  proto$0.set = function(params) {
+    if(typeof params !== 'undefined'
+       && typeof params.audio !== 'undefined') {
+      this.audio = params.audio;
     }
   };
 
@@ -106,27 +100,19 @@ var CalibrationClient = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"
    *
    * @function CalibrationClient~save
    */
-  proto$0.save = function() {var $D$4;var $D$5;var $D$6;var $D$7;
-    var params = {};
-    $D$7 = (this.audio.outputs);$D$4 = GET_ITER$0($D$7);$D$6 = $D$4 === 0;$D$5 = ($D$6 ? $D$7.length : void 0);for(var o ;$D$6 ? ($D$4 < $D$5) : !($D$5 = $D$4["next"]())["done"];){o = ($D$6 ? $D$7[$D$4++] : $D$5["value"]);
-      if(typeof this.audio[o] !== 'undefined') {
-        if(typeof params.audio === 'undefined') {
-          params.audio = {};
-        }
-        params.audio[o] = this.audio[o];
-      }
-    };$D$4 = $D$5 = $D$6 = $D$7 = void 0;
-    params.network = this.network;
-
-    var keys = ['audio', 'network'];
+  proto$0.save = function() {
+    var params = {
+      audio: this.audio,
+      network: this.network
+    };
     if(this.localStorage.enabled) {
       try {
-        $D$4 = GET_ITER$0(keys);$D$6 = $D$4 === 0;$D$5 = ($D$6 ? keys.length : void 0);for(var k ;$D$6 ? ($D$4 < $D$5) : !($D$5 = $D$4["next"]())["done"];){k = ($D$6 ? keys[$D$4++] : $D$5["value"]);
-          if(typeof params[k] !== 'undefined') {
-            window.localStorage[this.localStorage.prefix + k]
-              = JSON.stringify(params[k]);
+        for(var c in params) {
+          if(params.hasOwnProperty(c) ) {
+            window.localStorage[this.localStorage.prefix + c]
+              = JSON.stringify(params[c]);
           }
-        };$D$4 = $D$5 = $D$6 = void 0;
+        }
       } catch (error) {
         console.log(error.message);
         this.localStorage.enabled = false;
@@ -145,17 +131,17 @@ var CalibrationClient = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"
    * @function CalibrationClient~load
    * @returns {calibration} or {} if no calibration is available
    */
-  proto$0.load = function() {
+  proto$0.load = function() {var S_ITER$0 = typeof Symbol!=='undefined'&&Symbol&&Symbol.iterator||'@@iterator';var S_MARK$0 = typeof Symbol!=='undefined'&&Symbol&&Symbol["__setObjectSetter__"];function GET_ITER$0(v){if(v){if(Array.isArray(v))return 0;var f;if(S_MARK$0)S_MARK$0(v);if(typeof v==='object'&&typeof (f=v[S_ITER$0])==='function'){if(S_MARK$0)S_MARK$0(void 0);return f.call(v);}if(S_MARK$0)S_MARK$0(void 0);if((v+'')==='[object Generator]')return v;}throw new Error(v+' is not iterable')};var $D$0;var $D$1;var $D$2;
     var calibration = {};
     if(this.localStorage.enabled) {
       var keys = ['audio', 'network'];
-      for(var k in keys) {
+      $D$0 = GET_ITER$0(keys);$D$2 = $D$0 === 0;$D$1 = ($D$2 ? keys.length : void 0);for(var k ;$D$2 ? ($D$0 < $D$1) : !($D$1 = $D$0["next"]())["done"];){k = ($D$2 ? keys[$D$0++] : $D$1["value"]);
         if(typeof window.localStorage[this.localStorage.prefix + k]
            !== 'undefined') {
           calibration[k] = JSON.parse(
             window.localStorage[this.localStorage.prefix + k]);
         }
-      }
+      };$D$0 = $D$1 = $D$2 = void 0;
     }
     return calibration;
   };

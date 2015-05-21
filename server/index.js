@@ -7,7 +7,6 @@
 
 var debug = require('debug')('soundworks:server:calibration');
 var fs = require('fs');
-var pjson = require('../package.json'); // version
 var path = require('path');
 var string = require('../common/string');
 
@@ -68,8 +67,6 @@ var CalibrationServer = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"
         console.log('Error while reading persistent file: ' + error);
       }
     }
-    this.persistent.data[pjson.name + '.version'] = pjson.version;
-
     this.levenshtein = new string.Levenshtein();
   }DP$0(CalibrationServer,"prototype",{"configurable":false,"enumerable":false,"writable":false});
 
@@ -91,50 +88,22 @@ var CalibrationServer = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"
        && typeof params.calibration !== 'undefined') {
       var date = new Date();
 
-      if(typeof params.calibration.audio !== 'undefined')
-      {
-        writeFile = true;
-        if(typeof this.persistent.data[params.id] === 'undefined') {
-          this.persistent.data[params.id] = {};
-        }
-
-        if(typeof this.persistent.data[params.id].audio
-           === 'undefined') {
-          this.persistent.data[params.id].audio = {};
-        }
-        // outputs = ['internal', 'external']
-        for(var output in params.calibration.audio) {
-          if(params.calibration.audio.hasOwnProperty(output) ) {
-
-            if(typeof this.persistent.data[params.id].audio[output]
-               === 'undefined') {
-              this.persistent.data[params.id].audio[output] = [];
-            }
-
-            this.persistent.data[params.id].audio[output]
-              .push([date.toISOString(), params.calibration.audio[output] ] );
-
-            debug('%s: %s -> %s', date.toISOString(), params.id,
-                  params.calibration.audio[output]);
+      for(var c in params.calibration) {
+        if(params.calibration.hasOwnProperty(c) ) {
+          writeFile = true;
+          if(typeof this.persistent.data[params.id] === 'undefined') {
+            this.persistent.data[params.id] = {};
           }
-        }
-      }
 
-      if(typeof params.calibration.network !== 'undefined')
-      {
-        writeFile = true;
-        if(typeof this.persistent.data[params.id] === 'undefined') {
-          this.persistent.data[params.id] = {};
-        }
+          if(typeof this.persistent.data[params.id][c] === 'undefined') {
+            this.persistent.data[params.id][c] = [];
+          }
+          this.persistent.data[params.id][c]
+            .push([date.toISOString(), params.calibration[c]]);
 
-        if(typeof this.persistent.data[params.id].network === 'undefined') {
-          this.persistent.data[params.id].network = [];
+          debug('%s: %s -> %s', date.toISOString(), params.id,
+                params.calibration[c]);
         }
-        this.persistent.data[params.id].network
-          .push([date.toISOString(), params.calibration.network]);
-
-        debug('%s: %s -> %s', date.toISOString(), params.id,
-              params.calibration.network);
       }
 
       if(writeFile) {
@@ -149,12 +118,12 @@ var CalibrationServer = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"
    * @type Object
    * @property {calibration} calibration or empty object {} if nothing
    * found.
-   * @property {Number} distance, which is Infinity if nothing found.
+   * @property {Number} distance which is Infinity if nothing found.
    */
 
   /**
    * Return calibration, and distance, which is the closest to the
-   * given key (see {@linkcode ClientCalibration~getId}).
+   * given key (see {@linkcode CalibrationClient~getId}).
    *
    * @function CalibrationServer~load
    * @param {Object} params
@@ -176,29 +145,15 @@ var CalibrationServer = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"
 
       var data = this.persistent.data[closest.key];
       if(typeof data !== 'undefined') {
-        if(typeof data.audio !== 'undefined') {
-          // outputs = ['internal', 'external']
-          for(var output in data.audio) {
-            if(data.audio.hasOwnProperty(output) ) {
-              if(typeof ret.calibration.audio === 'undefined') {
-                ret.calibration.audio = {};
-              }
-              // retrieve last value
-              ret.calibration.audio[output] = data.audio[output].slice(-1)[0][1];
-              // use the distance, as some audio calibration exists
-              ret.distance = closest.distance;
-            }
+        for(var c in data) {
+          if(data.hasOwnProperty(c) ) {
+            // retrieve last value
+            ret.calibration[c] = data[c].slice(-1)[0][1];
+            ret.distance = closest.distance;
           }
         }
-
-        if(typeof data.network !== 'undefined') {
-          // retrieve last value
-          ret.calibration.network = data.network.slice(-1)[0][1];
-        }
-
       }
     }
-
     return ret;
   };
 
