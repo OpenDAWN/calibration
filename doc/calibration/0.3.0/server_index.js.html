@@ -23,7 +23,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CalibrationClient.html">CalibrationClient</a><ul class='methods'><li data-type='method'><a href="CalibrationClient.html#~get">get</a></li><li data-type='method'><a href="CalibrationClient.html#~getId">getId</a></li><li data-type='method'><a href="CalibrationClient.html#~load">load</a></li><li data-type='method'><a href="CalibrationClient.html#~save">save</a></li><li data-type='method'><a href="CalibrationClient.html#~set">set</a></li></ul></li><li><a href="CalibrationServer.html">CalibrationServer</a><ul class='methods'><li data-type='method'><a href="CalibrationServer.html#~load">load</a></li><li data-type='method'><a href="CalibrationServer.html#~save">save</a></li></ul></li><li><a href="string.Levenshtein.html">Levenshtein</a><ul class='methods'><li data-type='method'><a href="string.Levenshtein.html#~closestKey">closestKey</a></li><li data-type='method'><a href="string.Levenshtein.html#~distance">distance</a></li></ul></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CalibrationClient.html">CalibrationClient</a><ul class='methods'><li data-type='method'><a href="CalibrationClient.html#~get">get</a></li><li data-type='method'><a href="CalibrationClient.html#~getId">getId</a></li><li data-type='method'><a href="CalibrationClient.html#~load">load</a></li><li data-type='method'><a href="CalibrationClient.html#~save">save</a></li><li data-type='method'><a href="CalibrationClient.html#~set">set</a></li></ul></li><li><a href="CalibrationServer.html">CalibrationServer</a><ul class='methods'><li data-type='method'><a href="CalibrationServer.html#~load">load</a></li><li data-type='method'><a href="CalibrationServer.html#~save">save</a></li><li data-type='method'><a href="CalibrationServer.html#~start">start</a></li></ul></li><li><a href="string.Levenshtein.html">Levenshtein</a><ul class='methods'><li data-type='method'><a href="string.Levenshtein.html#~closestKey">closestKey</a></li><li data-type='method'><a href="string.Levenshtein.html#~distance">distance</a></li></ul></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <div id="main">
@@ -52,14 +52,35 @@ var string = require('../common/string');
 
 var CalibrationServer = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"a":t};return o["a"]===t})({},{});var DP$0 = Object.defineProperty;var GOPD$0 = Object.getOwnPropertyDescriptor;var MIXIN$0 = function(t,s){for(var p in s){if(s.hasOwnProperty(p)){DP$0(t,p,GOPD$0(s,p));}}return t};var proto$0={};
   /**
+   * @callback CalibrationServer~sendFunction
+   * @see {@linkcode CalibrationClient~receiveFunction}
+   * @param {String} messageType identification of pong message type
+   * @param {...Any} arguments
+   **/
+
+  /**
+   * @callback CalibrationServer~receiveFunction
+   * @see {@linkcode CalibrationClient~sendFunction}
+   * @param {String} messageType identification of ping message type
+   * @param {CalibrationServer~receiveCallback} receiveCallback called on
+   * each message matching messageType.
+   **/
+
+  /**
+   * @callback CalibrationServer~receiveCallback
+   * @param {...Any} arguments
+   */
+
+  /**
    * This is the constructor. See {@linkcode CalibrationServer~save}
    * and {@linkcode CalibrationServer~load}
    *
    * @constructs CalibrationServer
-   * @param {Object} [persistent]
-   * @param {String} [persistent.path='../../data']
-   * @param {String} [persistent.file='calibration.json']
-   * @param {String} [persistent.fileEncoding='utf8']
+   * @param {Object} [params]
+   * @param {Object} [params.persistent]
+   * @param {String} [params.persistent.path='../../data']
+   * @param {String} [params.persistent.file='calibration.json']
+   * @param {String} [params.persistent.fileEncoding='utf8']
    */
   function CalibrationServer() {var params = arguments[0];if(params === void 0)params = { persistent: {} };
     this.persistent = {};
@@ -103,12 +124,48 @@ var CalibrationServer = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"
     } catch (error) {
       if(error.code === 'ENOENT') {
         debug('Creating new persistent file: ' + this.persistent.file);
+        // ensure that there is at least the default value
+        this.persistent.data = {
+          default: {
+            audio: [
+              [
+                'default',
+                {
+                  delay: 0,
+                  gain: 0
+                }
+              ]
+            ]
+          }
+        };
       } else {
         console.log('Error while reading persistent file: ' + error);
       }
     }
     this.levenshtein = new string.Levenshtein();
   }DP$0(CalibrationServer,"prototype",{"configurable":false,"enumerable":false,"writable":false});
+
+  /**
+   * Start a calibration process by registering the send and receive
+   * functions.
+   *
+   * @function CalibrationServer~start
+   * @param {CalibrationServer~sendFunction} sendFunction
+   * @param {CalibrationServer~receiveFunction} receiveFunction
+   */
+  proto$0.start = function(sendFunction, receiveFunction) {var this$0 = this;
+    // register receive functions
+    receiveFunction('calibration:load', function(params)  {
+      var calibration = (distance = this$0.load(params)).calibration, distance = distance.distance;
+      if(distance &lt; Infinity) {
+        sendFunction('calibration:set', calibration);
+      }
+    });
+
+    receiveFunction('calibration:save', function(params)  {
+      this$0.save(params);
+    });
+  };
 
   /**
    * Store the given calibration.
@@ -158,7 +215,7 @@ var CalibrationServer = (function(){var PRS$0 = (function(o,t){o["__proto__"]={"
    * @type Object
    * @property {calibration} calibration or empty object {} if nothing
    * found.
-   * @property {Number} distance which is Infinity if nothing found.
+   * @property {Number} distance Infinity if nothing found.
    */
 
   /**
@@ -212,7 +269,7 @@ module.exports = exports = CalibrationServer;
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0</a> on Thu May 21 2015 19:05:20 GMT+0200 (CEST) using the Minami theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0</a> on Fri May 22 2015 18:46:08 GMT+0200 (CEST) using the Minami theme.
 </footer>
 
 <script>prettyPrint();</script>

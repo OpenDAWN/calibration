@@ -12,14 +12,35 @@ const string = require('../common/string');
 
 class CalibrationServer {
   /**
+   * @callback CalibrationServer~sendFunction
+   * @see {@linkcode CalibrationClient~receiveFunction}
+   * @param {String} messageType identification of pong message type
+   * @param {...Any} arguments
+   **/
+
+  /**
+   * @callback CalibrationServer~receiveFunction
+   * @see {@linkcode CalibrationClient~sendFunction}
+   * @param {String} messageType identification of ping message type
+   * @param {CalibrationServer~receiveCallback} receiveCallback called on
+   * each message matching messageType.
+   **/
+
+  /**
+   * @callback CalibrationServer~receiveCallback
+   * @param {...Any} arguments
+   */
+
+  /**
    * This is the constructor. See {@linkcode CalibrationServer~save}
    * and {@linkcode CalibrationServer~load}
    *
    * @constructs CalibrationServer
-   * @param {Object} [persistent]
-   * @param {String} [persistent.path='../../data']
-   * @param {String} [persistent.file='calibration.json']
-   * @param {String} [persistent.fileEncoding='utf8']
+   * @param {Object} [params]
+   * @param {Object} [params.persistent]
+   * @param {String} [params.persistent.path='../../data']
+   * @param {String} [params.persistent.file='calibration.json']
+   * @param {String} [params.persistent.fileEncoding='utf8']
    */
   constructor(params = { persistent: {} }) {
     this.persistent = {};
@@ -63,11 +84,47 @@ class CalibrationServer {
     } catch (error) {
       if(error.code === 'ENOENT') {
         debug('Creating new persistent file: ' + this.persistent.file);
+        // ensure that there is at least the default value
+        this.persistent.data = {
+          default: {
+            audio: [
+              [
+                'default',
+                {
+                  delay: 0,
+                  gain: 0
+                }
+              ]
+            ]
+          }
+        };
       } else {
         console.log('Error while reading persistent file: ' + error);
       }
     }
     this.levenshtein = new string.Levenshtein();
+  }
+
+  /**
+   * Start a calibration process by registering the send and receive
+   * functions.
+   *
+   * @function CalibrationServer~start
+   * @param {CalibrationServer~sendFunction} sendFunction
+   * @param {CalibrationServer~receiveFunction} receiveFunction
+   */
+  start(sendFunction, receiveFunction) {
+    // register receive functions
+    receiveFunction('calibration:load', (params) => {
+      const {calibration, distance} = this.load(params);
+      if(distance < Infinity) {
+        sendFunction('calibration:set', calibration);
+      }
+    });
+
+    receiveFunction('calibration:save', (params) => {
+      this.save(params);
+    });
   }
 
   /**
@@ -118,7 +175,7 @@ class CalibrationServer {
    * @type Object
    * @property {calibration} calibration or empty object {} if nothing
    * found.
-   * @property {Number} distance which is Infinity if nothing found.
+   * @property {Number} distance Infinity if nothing found.
    */
 
   /**
