@@ -120,17 +120,19 @@ class CalibrationClient {
   }
 
   /**
-   * Set audio calibration from given values.
-   *
-   * Non audio parameters (like network statistics) are not set.
+   * Set calibration from given values.
    *
    * @function CalibrationClient~set
-   * @param {calibration} restoreParams
+   * @param {calibration} params
    */
   set(params) {
-    if(typeof params !== 'undefined'
-       && typeof params.audio !== 'undefined') {
-      this.audio = params.audio;
+    if(typeof params !== 'undefined') {
+      if(typeof params.audio !== 'undefined') {
+        this.audio = params.audio;
+      }
+      if(typeof params.audio !== 'undefined') {
+        this.network = params.network;
+      }
       if(typeof this.updateFunction !== 'undefined') {
         this.updateFunction();
       }
